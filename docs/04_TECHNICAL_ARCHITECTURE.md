@@ -1,20 +1,33 @@
 # 🧱 Technical Architecture — Neon Drift Syndicate
 
+> v0.2: runtime LLM removed. Commentator + Rivals draw from `LineBankSO` pools.
+> v0.2.1: Unity 6 LTS (6000.4.4f1) target.
+
 ## 1. Stack
 
-Unity 2022.3 LTS + URP. Complete Racing Game 2 as foundation. Edy's Vehicle Physics. New Input System. Addressables. Claude proxy.
+| Layer | Choice |
+|---|---|
+| Engine | Unity **6 LTS (6000.4.4f1)** |
+| Render | **URP 17.x** |
+| Vehicle physics | Complete Racing Game 2 framework + Edy's Vehicle Physics |
+| Input | New Input System |
+| Async loading | Addressables |
+| Save | JsonUtility → persistentDataPath |
+| Dialogue | Hand-authored `LineBankSO` pools (Commentator + Rivals) |
+| Camera | Cinemachine 3.x |
+| Source control | Git + LFS |
 
 ## 2. Scripts
 
 ```
 Core/         (shared)
-AI/           ClaudeCopilotService, AICopilotPersonaSO
+Dialogue/     DialogueNodeSO, LineBankSO, ScriptedDialogueService
 UI/           MainMenuController, HUDController
 Gameplay/
   Vehicle/    VehicleControllerWrapper, VehicleDataSO
   Race/       RaceManager, LapTrigger, AIDriver, PositionSystem
-  Weapon/     WeaponMount, WeaponDataSO, ProjectileBase, EMPProjectile, HomingMissile
-  Commentator/ RaceCommentator (Claude AI)
+  Weapons/    WeaponMount, WeaponDataSO, ProjectileBase, EMPProjectile, HomingMissile
+  Commentator/ RaceCommentator (consumes 6 LineBankSO per event)
   Mission01/  Mission01Director
 ```
 
@@ -41,10 +54,10 @@ Gameplay/
 MissionManager.StartMission('M01')
   → Scene loads + RaceManager initialised
   → Player spawn at grid + AI ghosts spawn (PositionSystem tracks)
-  → Pre-race Commentator line (Claude AI)
+  → Pre-race: RaceCommentator.Say(raceStartBank) — picks from hand-authored LineBank
   → Countdown 3-2-1 GO
-  → RaceManager.OnLapCompleted → LapTrigger detection
-  → At lap count: RaceManager.RaceEnded → Mission objective complete
+  → RaceManager.OnLapCompleted → LapTrigger detection → RaceCommentator.OnLapComplete()
+  → At lap count: RaceManager.RaceEnded → RaceCommentator.OnRaceFinish() → Mission objective complete
   → Results screen via Heat UI
 ```
 
@@ -54,17 +67,26 @@ MissionManager.StartMission('M01')
 - Rubber-banding via target-speed = playerSpeed * (1 + difficultyDelta).
 - Switches lanes based on player position + boost availability.
 
-## 7. Scalability
+## 7. Unity 6 (6000.4.4f1) compatibility notes
+
+- **URP** upgraded from 14.x → 17.x — Render Pipeline Converter handles Unity 2022–era track packs.
+- **Cinemachine 3.x** — chase-cam uses `CinemachineCamera` + `CinemachineThirdPersonFollow` (or `CinemachineHardLookAt` for the bumper-cam variant).
+- **Complete Racing Game 2** / **Edy's Vehicle Physics** — both are Unity-6-compatible; if Edy's posts an update, take the latest.
+- **Splines**, **Addressables**, **TextMeshPro**, **New Input System** unchanged.
+
+## 8. Scalability
 
 - New track = new scene + new MissionData + new RaceConfigSO.
 - New weapon = new ProjectileBase subclass + WeaponDataSO.
 - New vehicle = new prefab + VehicleDataSO.
+- New Commentator event = add a `LineBankSO` field on `RaceCommentator` + author the bank.
+- Internet outage breaks game? ❌ No — fully offline.
 
-## 8. Performance budget (60 fps RTX 2060)
+## 9. Performance budget (60 fps RTX 2060)
 
 - Draw calls < 1,500 (track + cars + neon)
 - Triangles < 2.5M
 - Particles < 6,000 (drift sparks + explosions)
 - Memory < 1.5 GB
 
-## 9. CI later.
+## 10. CI later.

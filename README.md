@@ -6,7 +6,7 @@
 |---|---|
 | **Genre** | Cyberpunk Arcade Racer + Light Vehicle Combat |
 | **Platforms** | PC (Steam) primary; potential Switch |
-| **Engine** | Unity 2022.3 LTS + URP |
+| **Engine** | Unity **6 LTS (6000.4.4f1)** + URP |
 | **Target frame-rate** | 60 fps min, 120 fps target on RTX 3070 |
 | **Mission 1 scope** | Tutorial race + intro to faction + first weapon pickup |
 | **Designed for** | 6 missions (tutorial → 5 faction races escalating to championship) |
@@ -27,7 +27,7 @@ Details in `docs/01_IDEATION_AND_TRENDS.md`.
 ## Quick start
 
 1. Read `docs/07_UNITY_SETUP_GUIDE.md`.
-2. Unity 2022.3 LTS URP; copy `Assets/_Project/`.
+2. Unity **6 LTS (6000.4.4f1)** URP; copy `Assets/_Project/`.
 3. Import: **Complete Racing Game 2** (template foundation), Modular Cyber Racing Cars, Edy's Vehicle Physics, Neon Interior Props, Sci-Fi Space Stations Creator, City Pack, UNI VFX Missiles & Explosions, Heat UI, Lumen FX 2 — from inventory.
 4. Open `Scenes/Bootstrap.unity`.
 
@@ -41,4 +41,5 @@ Details in `docs/01_IDEATION_AND_TRENDS.md`.
 | GDD v1.0 approved | ✅ |
 | Architecture & scripts | ✅ |
 | v0.2 — runtime LLM removed, Commentator uses LineBanks | ✅ |
+| v0.2.1 — Unity 6 LTS (6000.4.4f1) target | ✅ |
 | Mission 1 (Tutorial Race) | ⏳ needs asset import |
