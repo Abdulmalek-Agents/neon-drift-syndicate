@@ -1,28 +1,55 @@
 using System.Collections;
 using UnityEngine;
-using InventixGames.Core;
+using InventixGames.Core.Dialogue;
+
 namespace NeonDrift.Commentator
 {
+    /// <summary>
+    /// Picks commentator lines from event-appropriate LineBankSO pools.
+    /// v0.2: 100% hand-authored — see /Assets/_Project/Data/LineBanks/.
+    /// Matches the shipping pattern of Burnout / Forza Horizon / The Crew.
+    /// </summary>
     public class RaceCommentator : MonoBehaviour
     {
-        [SerializeField] private AICopilotPersonaSO commentatorPersona;
-        [SerializeField] private float minIntervalSec = 12f;
-        [SerializeField] private float maxIntervalSec = 25f;
-        private IAICopilotService _ai;
+        [Header("Event line banks (author 30–60 lines each)")]
+        [SerializeField] private LineBankSO raceStartBank;
+        [SerializeField] private LineBankSO overtakeBank;
+        [SerializeField] private LineBankSO bigDriftBank;
+        [SerializeField] private LineBankSO lapCompleteBank;
+        [SerializeField] private LineBankSO raceFinishBank;
+        [SerializeField] private LineBankSO idleChatterBank;
 
-        private void Start() { _ai = ServiceLocator.Get<IAICopilotService>(); StartCoroutine(Loop()); }
+        [Header("Cadence (idle filler between events)")]
+        [SerializeField] private float idleMin = 12f, idleMax = 25f;
 
-        private IEnumerator Loop()
+        [Header("Audio")]
+        [SerializeField] private AudioSource commsSource;
+
+        private void Start() { StartCoroutine(StartSequence()); }
+
+        private IEnumerator StartSequence()
         {
             yield return new WaitForSeconds(1.5f);
-            _ai.Ask(commentatorPersona.systemPrompt, "Race start: give a hype 1-sentence call.", OnLine);
+            Say(raceStartBank);
             while (true)
             {
-                yield return new WaitForSeconds(Random.Range(minIntervalSec, maxIntervalSec));
-                _ai.Ask(commentatorPersona.systemPrompt, BuildContext(), OnLine);
+                yield return new WaitForSeconds(Random.Range(idleMin, idleMax));
+                Say(idleChatterBank);
             }
         }
-        protected virtual string BuildContext() => "Player is racing. Give a one-line commentator call.";
-        protected virtual void OnLine(string line) { Debug.Log($"[Commentator] {line}"); /* Pipe to HUD subtitle */ }
+
+        public void OnOvertake() => Say(overtakeBank);
+        public void OnBigDrift() => Say(bigDriftBank);
+        public void OnLapComplete() => Say(lapCompleteBank);
+        public void OnRaceFinish() => Say(raceFinishBank);
+
+        protected virtual void Say(LineBankSO bank)
+        {
+            if (bank == null) return;
+            string line = bank.PickRandom(out var clip);
+            if (commsSource && clip) { commsSource.clip = clip; commsSource.Play(); }
+            // Pipe `line` to HUD subtitle.
+            Debug.Log($"[Commentator] {line}");
+        }
     }
 }
